@@ -258,9 +258,9 @@ dirty_deteccion_outliers <- dirty_iris %>%
       )
     )
   )
-dirty_deteccion_outliers
 
-dirty_deteccion_outliers %>% 
+
+dirty_outliers_petlen<- dirty_deteccion_outliers %>% 
   select(grep(pattern = "Petal[.]Length.*", colnames(dirty_deteccion_outliers), value = TRUE))
 ```
 
@@ -272,7 +272,16 @@ En los métodos de detección de outliers analizados, examina los resultados com
   * Los valores etiquetados como outliers (ordenados de menor a mayor).
 
 ```{r Solucion ejercicio 7, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
+dirty_outliers_petlen %>% 
+  summarise(
+    across(-Petal.Length,
+    list(
+      total = ~sum(.,na.rm=TRUE)
+    )))
 
+dirty_solo_outliers <- dirty_outliers_petlen %>% 
+  filter(if_any(-Petal.Length,~.==TRUE)) %>% 
+  arrange(desc(Petal.Length))
 ```
 
 ## Ejercicio 8: Representación gráfica
