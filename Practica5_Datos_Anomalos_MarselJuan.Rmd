@@ -203,18 +203,17 @@ Escribe una función que detecte los outliers de un vector $x$ para cada uno de 
 
 ```{r , include = FALSE}
 # Regla 3 sigma
-regla_sigma <- function(x){
+reglasigma <- function(x){
   rango_1 <- mean(x,na.rm=TRUE) -3*sd(x, na.rm=TRUE)
   rango_2 <- mean(x,na.rm=TRUE) +3*sd(x, na.rm=TRUE)
-  outliers <- ifelse((x < rango_1) | (x > rango_2), TRUE, FALSE)
+  outliers <- ifelse(is.na(x),NA,ifelse((x < rango_1) | (x > rango_2), TRUE, FALSE))
   return(outliers)
 }
 
 # Identificador Hampel
 reglahampel <- function(x){
-  rango_1 <- mean(x,na.rm=TRUE) -3*MADM(x)
-  rango_2 <- mean(x,na.rm=TRUE) +3*MADM(x)
-  outliers <- ifelse((x < rango_1) | (x > rango_2), TRUE, FALSE)
+  rango <- 3*MADM(x)
+  outliers <- ifelse(is.na(x),NA,ifelse((x >rango), TRUE, FALSE))
   return(outliers)
 }
 
@@ -224,7 +223,7 @@ reglaboxplot <- function(x){
   iqr <- IQR(x, na.rm=TRUE)
   q1 <- quantile(x,probs=0.25, na.rm=TRUE)
   q3 <- quantile(x, probs=0.75, na.rm=TRUE)
-  outliers <- ifelse((x < q1-1.5*iqr) | (x > q3+1.5*iqr), TRUE, FALSE)
+  outliers <- ifelse(is.na(x),NA,ifelse((x < q1-1.5*iqr) | (x > q3+1.5*iqr), TRUE, FALSE))
   return(outliers)
 }
 # Percentiles
@@ -232,7 +231,7 @@ reglapercentil <- function(x){
     iqr <- IQR(x, na.rm=TRUE)
   q_bajo <- quantile(x,probs=0.05, na.rm=TRUE)
   q_alto <- quantile(x, probs=0.95, na.rm=TRUE)
-  outliers <- ifelse((x < q_bajo-1.5*iqr) | (x > q_alto+1.5*iqr), TRUE, FALSE)
+  outliers <- ifelse(is.na(x),NA,ifelse((x < q_bajo-1.5*iqr) | (x > q_alto+1.5*iqr), TRUE, FALSE))
   return(outliers)
 }
 ```
@@ -247,8 +246,22 @@ Nota: podría extenderse la aplicación a todas las variables numéricas usando 
 
 ```{r Solucion ejercicio 6, include=TRUE, echo=TRUE, eval=TRUE, results=TRUE}
 
+dirty_deteccion_outliers <- dirty_iris %>% 
+  mutate(
+    across(
+      where(is.numeric),
+      list(
+        outliers_sigma       = ~ reglasigma(.),
+        outliers_hampel      = ~ reglahampel(.),
+        outliers_boxplot     = ~ reglaboxplot(.),
+        outliers_percentiles = ~ reglapercentil(.)
+      )
+    )
+  )
+dirty_deteccion_outliers
 
-
+dirty_deteccion_outliers %>% 
+  select(grep(pattern = "Petal[.]Length.*", colnames(dirty_deteccion_outliers), value = TRUE))
 ```
 
 ## Ejercicio 7: Comparativa de los métodos de detección de outliers
